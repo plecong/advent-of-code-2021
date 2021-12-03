@@ -20,6 +20,7 @@ struct Command {
 struct Location {
     depth: i32,
     position: i32,
+    aim: i32,
 }
 
 impl Location {
@@ -59,6 +60,7 @@ fn get_location(input: &Vec<Command>) -> Location {
         Location {
             depth: 0,
             position: 0,
+            aim: 0,
         },
         |acc, x| Location {
             depth: match x.direction {
@@ -70,14 +72,43 @@ fn get_location(input: &Vec<Command>) -> Location {
                 Direction::Forward => acc.position + x.count,
                 _ => acc.position,
             },
+            aim: 0,
+        },
+    )
+}
+
+fn get_location_part2(input: &Vec<Command>) -> Location {
+    input.iter().fold(
+        Location {
+            depth: 0,
+            position: 0,
+            aim: 0,
+        },
+        |acc, x| Location {
+            depth: match x.direction {
+                Direction::Forward => acc.depth + (acc.aim * x.count),
+                _ => acc.depth,
+            },
+            position: match x.direction {
+                Direction::Forward => acc.position + x.count,
+                _ => acc.position,
+            },
+            aim: match x.direction {
+                Direction::Down => acc.aim + x.count,
+                Direction::Up => acc.aim - x.count,
+                _ => acc.aim,
+            },
         },
     )
 }
 
 fn main() {
     let input = day02_input();
-    let location = get_location(&input);
-    println!("Part 1: {}", location.result());
+    let part1 = get_location(&input);
+    println!("Part 1: {}", part1.result());
+
+    let part2 = get_location_part2(&input);
+    println!("Part 2: {}", part2.result());
 }
 
 #[cfg(test)]
@@ -104,5 +135,20 @@ mod tests {
         assert_eq!(location.depth, 10);
         assert_eq!(location.position, 15);
         assert_eq!(location.result(), 150);
+    }
+
+    #[test]
+    fn test_position_part2() {
+        let sample = "forward 5\n\
+            down 5\n\
+            forward 8\n\
+            up 3\n\
+            down 8\n\
+            forward 2";
+        let input = sample.lines().filter_map(parse_command).collect();
+        let location = get_location_part2(&input);
+        assert_eq!(location.position, 15);
+        assert_eq!(location.depth, 60);
+        assert_eq!(location.result(), 900);
     }
 }
